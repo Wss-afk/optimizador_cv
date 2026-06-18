@@ -46,7 +46,7 @@ class JobAnalysis(BaseModel):
 
 ### Herramientas a Usar
 - **LLM Framework**: LangChain o LlamaIndex
-- **Parsing**: spaCy, regex, o Claude API
+- **Parsing**: spaCy, regex, o Ollama
 - **Data Validation**: Pydantic
 - **Orchestración**: simple queue/dict o tool_calling de LLM
 
@@ -97,7 +97,7 @@ class CVOptimizer:
 4. **Responsibility Alignment** — Conectar experiencia con job requirements
 
 ### Herramientas a Usar
-- **LLM Calls**: Usar prompts bien crafted para Claude/GPT
+- **LLM Calls**: Usar prompts bien crafted para Ollama
 - **Text Processing**: NLTK, spaCy para análisis
 - **Validation**: Verificar que no se inventan cosas
 - **Versioning**: Guardar CV original + versiones
