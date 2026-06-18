@@ -1,0 +1,1 @@
+Optimizador de currículums — un agente analiza la oferta de empleo, otro reescribe el CV para ajustarlo, un agente ATS evalúa la compatibilidad con filtros automáticos y un revisor final pule el resultado.
