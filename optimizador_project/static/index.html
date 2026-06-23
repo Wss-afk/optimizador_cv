@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Optimizador de Currículums</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+        }
+
+        header h1 {
+            font-size: 1.8rem;
+            background: linear-gradient(135deg, #60a5fa, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+
+        header p { color: #94a3b8; font-size: 0.95rem; }
+
+        .card {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .card h2 {
+            font-size: 1.1rem;
+            color: #93c5fd;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .card h2 .step {
+            background: #3b82f6;
+            color: white;
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        .upload-zone {
+            border: 2px dashed #475569;
+            border-radius: 8px;
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .upload-zone:hover, .upload-zone.dragover {
+            border-color: #60a5fa;
+            background: rgba(96, 165, 250, 0.05);
+        }
+
+        .upload-zone.has-file {
+            border-color: #34d399;
+            background: rgba(52, 211, 153, 0.05);
+        }
+
+        .upload-zone input[type="file"] {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .upload-zone .icon { font-size: 2rem; margin-bottom: 0.5rem; }
+        .upload-zone .label { color: #94a3b8; font-size: 0.9rem; }
+        .upload-zone .filename { color: #34d399; font-weight: 600; margin-top: 0.5rem; }
+
+        .tab-bar {
+            display: flex;
+            gap: 0;
+            margin-bottom: 1rem;
+        }
+
+        .tab-bar button {
+            flex: 1;
+            padding: 0.6rem;
+            background: #1e293b;
+            border: 1px solid #334155;
+            color: #94a3b8;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+
+        .tab-bar button:first-child { border-radius: 8px 0 0 8px; }
+        .tab-bar button:last-child { border-radius: 0 8px 8px 0; }
+
+        .tab-bar button.active {
+            background: #3b82f6;
+            border-color: #3b82f6;
+            color: white;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 150px;
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            color: #e2e8f0;
+            padding: 1rem;
+            font-family: inherit;
+            font-size: 0.9rem;
+            resize: vertical;
+        }
+
+        textarea:focus { outline: none; border-color: #60a5fa; }
+
+        .btn-submit {
+            width: 100%;
+            padding: 1rem;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 0.5rem;
+        }
+
+        .btn-submit:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 4px 20px rgba(59, 130, 246, 0.3); }
+        .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .loading {
+            text-align: center;
+            padding: 3rem;
+            display: none;
+        }
+
+        .loading.show { display: block; }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid #334155;
+            border-top-color: #60a5fa;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .loading p { color: #94a3b8; }
+        .loading .step-text { color: #60a5fa; font-weight: 600; margin-top: 0.5rem; }
+
+        #results { display: none; }
+        #results.show { display: block; }
+
+        .score-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .score-card {
+            background: #0f172a;
+            border-radius: 10px;
+            padding: 1.2rem;
+            text-align: center;
+        }
+
+        .score-card .value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.3rem;
+        }
+
+        .score-card .label { color: #94a3b8; font-size: 0.8rem; }
+
+        .score-high { color: #34d399; }
+        .score-mid { color: #fbbf24; }
+        .score-low { color: #f87171; }
+
+        .section { margin-bottom: 1.5rem; }
+        .section h3 { color: #93c5fd; font-size: 1rem; margin-bottom: 0.8rem; }
+
+        .keyword-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+        }
+
+        .keyword {
+            padding: 0.3rem 0.7rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .keyword.found { background: rgba(52, 211, 153, 0.15); color: #34d399; }
+        .keyword.missing { background: rgba(248, 113, 113, 0.15); color: #f87171; }
+
+        .change-list { list-style: none; }
+        .change-list li {
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #1e293b;
+            font-size: 0.9rem;
+            color: #cbd5e1;
+            padding-left: 1.2rem;
+            position: relative;
+        }
+        .change-list li::before {
+            content: "→";
+            position: absolute;
+            left: 0;
+            color: #60a5fa;
+        }
+
+        .cv-preview {
+            background: #0f172a;
+            border-radius: 8px;
+            padding: 1.2rem;
+            max-height: 400px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            font-size: 0.85rem;
+            line-height: 1.6;
+            color: #cbd5e1;
+        }
+
+        .btn-download {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.7rem 1.5rem;
+            background: #1e293b;
+            border: 1px solid #334155;
+            color: #93c5fd;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+            margin-top: 1rem;
+        }
+
+        .btn-download:hover { background: #334155; }
+
+        .error-box {
+            background: rgba(248, 113, 113, 0.1);
+            border: 1px solid rgba(248, 113, 113, 0.3);
+            border-radius: 8px;
+            padding: 1rem;
+            color: #fca5a5;
+            display: none;
+        }
+
+        .error-box.show { display: block; }
+
+        .health-bar {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+            font-size: 0.8rem;
+        }
+
+        .health-item {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .dot.green { background: #34d399; }
+        .dot.red { background: #f87171; }
+        .dot.gray { background: #64748b; }
+
+        /* Offers Grid */
+        .offers-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .offers-header .toggle-icon {
+            transition: transform 0.3s;
+            font-size: 1.2rem;
+        }
+
+        .offers-header .toggle-icon.collapsed { transform: rotate(-90deg); }
+
+        .offers-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 0.8rem;
+            margin-top: 1rem;
+            max-height: 500px;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+
+        .offers-grid::-webkit-scrollbar { width: 6px; }
+        .offers-grid::-webkit-scrollbar-track { background: #0f172a; border-radius: 3px; }
+        .offers-grid::-webkit-scrollbar-thumb { background: #475569; border-radius: 3px; }
+
+        .offer-card {
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 10px;
+            padding: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .offer-card:hover {
+            border-color: #60a5fa;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(96, 165, 250, 0.1);
+        }
+
+        .offer-card .offer-title {
+            font-weight: 600;
+            color: #e2e8f0;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+            line-height: 1.3;
+        }
+
+        .offer-card .offer-company {
+            color: #60a5fa;
+            font-size: 0.8rem;
+            margin-bottom: 0.4rem;
+        }
+
+        .offer-card .offer-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            font-size: 0.75rem;
+            color: #94a3b8;
+        }
+
+        .offer-card .offer-meta span {
+            display: flex;
+            align-items: center;
+            gap: 0.2rem;
+        }
+
+        .offers-count {
+            background: #3b82f6;
+            color: white;
+            padding: 0.15rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .offers-body { overflow: hidden; transition: max-height 0.3s ease; }
+        .offers-body.collapsed { max-height: 0 !important; margin-top: 0; }
+
+        /* Offer Detail Modal */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s;
+        }
+
+        .modal-overlay.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 700px;
+            max-height: 80vh;
+            display: flex;
+            flex-direction: column;
+            transform: scale(0.95);
+            transition: transform 0.2s;
+        }
+
+        .modal-overlay.show .modal { transform: scale(1); }
+
+        .modal-header {
+            padding: 1.2rem 1.5rem;
+            border-bottom: 1px solid #334155;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .modal-header h3 {
+            color: #93c5fd;
+            font-size: 1.1rem;
+            margin-bottom: 0.3rem;
+        }
+
+        .modal-header .modal-company {
+            color: #60a5fa;
+            font-size: 0.9rem;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: #94a3b8;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0 0.3rem;
+            line-height: 1;
+        }
+
+        .modal-close:hover { color: #e2e8f0; }
+
+        .modal-info {
+            display: flex;
+            gap: 1rem;
+            padding: 0.8rem 1.5rem;
+            border-bottom: 1px solid #334155;
+            font-size: 0.85rem;
+            color: #94a3b8;
+            flex-wrap: wrap;
+        }
+
+        .modal-info span { display: flex; align-items: center; gap: 0.3rem; }
+
+        .modal-body {
+            padding: 1.2rem 1.5rem;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .modal-body pre {
+            white-space: pre-wrap;
+            font-family: inherit;
+            font-size: 0.85rem;
+            line-height: 1.7;
+            color: #cbd5e1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🚀 Optimizador de Currículums</h1>
+            <p>Sistema multi-agente con IA para optimizar tu CV y superar filtros ATS</p>
+        </header>
+
+        <div class="health-bar" id="healthBar">
+            <div class="health-item">
+                <span class="dot gray" id="dotApi"></span>
+                <span>API</span>
+            </div>
+            <div class="health-item">
+                <span class="dot gray" id="dotOllama"></span>
+                <span>Ollama</span>
+            </div>
+            <div class="health-item">
+                <span class="dot gray" id="dotQwen"></span>
+                <span>Qwen3:8b</span>
+            </div>
+            <div class="health-item">
+                <span class="dot gray" id="dotEmbed"></span>
+                <span>Embeddings</span>
+            </div>
+        </div>
+
+        <!-- Offers Browser -->
+        <div class="card">
+            <div class="offers-header" onclick="toggleOffers()">
+                <h2 style="margin-bottom:0">💼 Ofertas de Empleo Disponibles <span class="offers-count" id="offersCount">0</span></h2>
+                <span class="toggle-icon" id="toggleIcon">▼</span>
+            </div>
+            <div class="offers-body" id="offersBody">
+                <div class="offers-grid" id="offersGrid">
+                    <div style="color:#94a3b8;grid-column:1/-1;text-align:center;padding:1rem">Cargando ofertas...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Offer Detail Modal -->
+        <div class="modal-overlay" id="offerModal" onclick="closeOfferModal(event)">
+            <div class="modal" onclick="event.stopPropagation()">
+                <div class="modal-header">
+                    <div>
+                        <h3 id="modalTitle"></h3>
+                        <div class="modal-company" id="modalCompany"></div>
+                    </div>
+                    <button class="modal-close" onclick="closeOfferModal()">&times;</button>
+                </div>
+                <div class="modal-info">
+                    <span id="modalLocation">📍 -</span>
+                    <span id="modalSalary">💰 -</span>
+                </div>
+                <div class="modal-body">
+                    <pre id="modalText"></pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- CV Upload -->
+        <div class="card">
+            <h2><span class="step">1</span> Sube tu Currículum (PDF o TXT)</h2>
+            <div class="upload-zone" id="cvZone">
+                <input type="file" id="cvFile" accept=".pdf,.txt,.md">
+                <div class="icon">📄</div>
+                <div class="label">Arrastra tu CV aquí o haz clic para seleccionar</div>
+                <div class="filename" id="cvFilename"></div>
+            </div>
+        </div>
+
+        <!-- Submit -->
+        <button class="btn-submit" id="btnSubmit" onclick="submitOptimize()">
+            ⚡ Optimizar Currículum
+        </button>
+
+        <!-- Error -->
+        <div class="error-box" id="errorBox"></div>
+
+        <!-- Loading -->
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Procesando con IA...</p>
+            <div class="step-text" id="loadingStep">Analizando oferta de empleo</div>
+        </div>
+
+        <!-- Results -->
+        <div id="results">
+            <!-- Offer Match -->
+            <div class="card" id="offerMatchCard" style="display:none">
+                <h2>🎯 Oferta Compatible Encontrada</h2>
+                <div style="display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap">
+                    <div>
+                        <strong>Oferta:</strong> <span id="matchedOfferName" style="color:#60a5fa">-</span>
+                    </div>
+                    <div>
+                        <strong>Similitud:</strong> <span id="matchedOfferScore" class="value score-high" style="font-size:1.2rem">-</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>📊 Puntuación ATS</h2>
+                <div class="score-grid" id="scoreGrid"></div>
+            </div>
+
+            <div class="card">
+                <div class="section">
+                    <h3>✅ Keywords Encontradas</h3>
+                    <div class="keyword-list" id="foundKeywords"></div>
+                </div>
+                <div class="section">
+                    <h3>❌ Keywords Faltantes</h3>
+                    <div class="keyword-list" id="missingKeywords"></div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="section">
+                    <h3>📝 Cambios Realizados</h3>
+                    <ul class="change-list" id="changesMade"></ul>
+                </div>
+                <div class="section" id="improvementsSection" style="display:none">
+                    <h3>🔧 Mejoras en Revisión Final</h3>
+                    <ul class="change-list" id="improvements"></ul>
+                </div>
+                <div class="section" id="recommendationsSection" style="display:none">
+                    <h3>💡 Recomendaciones</h3>
+                    <ul class="change-list" id="recommendations"></ul>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>📄 CV Final Optimizado</h2>
+                <div class="cv-preview" id="cvPreview"></div>
+                <button class="btn-download" onclick="downloadCV()">📥 Descargar CV en PDF</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let finalCVText = '';
+
+        // ---- Health Check ----
+        async function checkHealth() {
+            try {
+                const res = await fetch('/api/health');
+                const data = await res.json();
+                document.getElementById('dotApi').className = 'dot green';
+                document.getElementById('dotOllama').className = data.ollama_running ? 'dot green' : 'dot red';
+                document.getElementById('dotQwen').className = data.qwen3_ready ? 'dot green' : 'dot red';
+                document.getElementById('dotEmbed').className = data.embeddings_ready ? 'dot green' : 'dot red';
+            } catch {
+                document.getElementById('dotApi').className = 'dot red';
+            }
+        }
+        checkHealth();
+
+        // ---- Load Offers ----
+        async function loadOffers() {
+            try {
+                const res = await fetch('/api/offers');
+                const data = await res.json();
+                const grid = document.getElementById('offersGrid');
+                document.getElementById('offersCount').textContent = data.count;
+
+                if (data.count === 0) {
+                    grid.innerHTML = '<div style="color:#94a3b8;grid-column:1/-1;text-align:center;padding:1rem">No hay ofertas disponibles</div>';
+                    return;
+                }
+
+                grid.innerHTML = data.offers.map(o => `
+                    <div class="offer-card" onclick="openOfferModal('${o.filename}')">
+                        <div class="offer-title">${o.title || o.filename}</div>
+                        <div class="offer-company">${o.company || 'Empresa no especificada'}</div>
+                        <div class="offer-meta">
+                            ${o.location ? `<span>📍 ${o.location}</span>` : ''}
+                            ${o.salary ? `<span>💰 ${o.salary}</span>` : ''}
+                        </div>
+                    </div>
+                `).join('');
+            } catch (err) {
+                console.error('Error cargando ofertas:', err);
+            }
+        }
+        loadOffers();
+
+        // ---- Offers Toggle ----
+        function toggleOffers() {
+            const body = document.getElementById('offersBody');
+            const icon = document.getElementById('toggleIcon');
+            body.classList.toggle('collapsed');
+            icon.classList.toggle('collapsed');
+        }
+
+        // ---- Offer Modal ----
+        async function openOfferModal(filename) {
+            try {
+                const res = await fetch(`/api/offers/${encodeURIComponent(filename)}`);
+                if (!res.ok) throw new Error('Oferta no encontrada');
+                const data = await res.json();
+
+                document.getElementById('modalTitle').textContent = data.title || data.filename;
+                document.getElementById('modalCompany').textContent = data.company || '';
+                document.getElementById('modalLocation').textContent = data.location ? `📍 ${data.location}` : '';
+                document.getElementById('modalSalary').textContent = data.salary ? `💰 ${data.salary}` : '';
+                document.getElementById('modalText').textContent = data.full_text;
+                document.getElementById('offerModal').classList.add('show');
+            } catch (err) {
+                alert('Error: ' + err.message);
+            }
+        }
+
+        function closeOfferModal(event) {
+            if (event && event.target !== event.currentTarget) return;
+            document.getElementById('offerModal').classList.remove('show');
+        }
+
+        // Close modal with Escape key
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape') closeOfferModal();
+        });
+
+        // ---- File Upload Zones ----
+        ['cvZone'].forEach(id => {
+            const zone = document.getElementById(id);
+            zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('dragover'); });
+            zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+            zone.addEventListener('drop', e => {
+                e.preventDefault();
+                zone.classList.remove('dragover');
+                const input = zone.querySelector('input[type="file"]');
+                input.files = e.dataTransfer.files;
+                input.dispatchEvent(new Event('change'));
+            });
+        });
+
+        document.getElementById('cvFile').addEventListener('change', function() {
+            const zone = document.getElementById('cvZone');
+            const name = document.getElementById('cvFilename');
+            if (this.files[0]) {
+                name.textContent = '✓ ' + this.files[0].name;
+                zone.classList.add('has-file');
+            }
+        });
+
+        // ---- Submit ----
+        async function submitOptimize() {
+            const cvFile = document.getElementById('cvFile').files[0];
+
+            // Validaciones
+            if (!cvFile) return showError('Por favor sube tu CV (PDF o TXT).');
+
+            hideError();
+            showLoading(true);
+
+            const formData = new FormData();
+            formData.append('cv_file', cvFile);
+
+            try {
+                const res = await fetch('/api/optimize', { method: 'POST', body: formData });
+                const data = await res.json();
+
+                showLoading(false);
+
+                if (!res.ok) {
+                    return showError(data.detail || 'Error en el servidor.');
+                }
+
+                if (!data.success) {
+                    return showError('Error: ' + (data.errors || []).join(', '));
+                }
+
+                renderResults(data);
+
+            } catch (err) {
+                showLoading(false);
+                showError('Error de conexión: ' + err.message);
+            }
+        }
+
+        // ---- Render Results ----
+        function renderResults(data) {
+            finalCVText = data.final_cv || '';
+
+            // Offer Match
+            if (data.matched_offer && data.matched_offer.filename) {
+                const matchCard = document.getElementById('offerMatchCard');
+                matchCard.style.display = 'block';
+                document.getElementById('matchedOfferName').textContent = data.matched_offer.filename;
+                const simScore = Math.round((data.matched_offer.similarity_score || 0) * 100);
+                document.getElementById('matchedOfferScore').textContent = simScore + '%';
+            }
+
+            // Scores
+            const grid = document.getElementById('scoreGrid');
+            grid.innerHTML = '';
+            if (data.ats_score) {
+                const scores = [
+                    { label: 'Puntuación Global', value: data.ats_score.overall_score },
+                    { label: 'Keyword Match', value: data.ats_score.keyword_match },
+                    { label: 'Formato', value: data.ats_score.format_score },
+                    { label: 'Completitud', value: data.ats_score.completeness },
+                ];
+                scores.forEach(s => {
+                    const cls = s.value >= 75 ? 'score-high' : s.value >= 50 ? 'score-mid' : 'score-low';
+                    grid.innerHTML += `<div class="score-card"><div class="value ${cls}">${Math.round(s.value)}</div><div class="label">${s.label}</div></div>`;
+                });
+            }
+
+            // Keywords
+            renderKeywords('foundKeywords', data.found_keywords, 'found');
+            renderKeywords('missingKeywords', data.missing_keywords, 'missing');
+
+            // Changes
+            renderList('changesMade', data.changes_made);
+
+            // Improvements
+            if (data.improvements_applied && data.improvements_applied.length > 0) {
+                document.getElementById('improvementsSection').style.display = 'block';
+                renderList('improvements', data.improvements_applied);
+            }
+
+            // Recommendations
+            if (data.recommendations && data.recommendations.length > 0) {
+                document.getElementById('recommendationsSection').style.display = 'block';
+                renderList('recommendations', data.recommendations);
+            }
+
+            // CV Preview
+            document.getElementById('cvPreview').textContent = finalCVText;
+
+            document.getElementById('results').classList.add('show');
+            document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function renderKeywords(containerId, keywords, type) {
+            const el = document.getElementById(containerId);
+            el.innerHTML = (keywords || []).map(k => `<span class="keyword ${type}">${k}</span>`).join('');
+        }
+
+        function renderList(containerId, items) {
+            const el = document.getElementById(containerId);
+            el.innerHTML = (items || []).map(item => `<li>${item}</li>`).join('');
+        }
+
+        // ---- Download CV as PDF ----
+        async function downloadCV() {
+            if (!finalCVText) return;
+            try {
+                const formData = new FormData();
+                formData.append('cv_text', finalCVText);
+                const res = await fetch('/api/download-pdf', { method: 'POST', body: formData });
+                if (!res.ok) throw new Error('Error generando PDF');
+                const blob = await res.blob();
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'cv_optimizado.pdf';
+                a.click();
+                URL.revokeObjectURL(url);
+            } catch (err) {
+                alert('Error al descargar PDF: ' + err.message);
+            }
+        }
+
+        // ---- Helpers ----
+        function showLoading(show) {
+            document.getElementById('loading').classList.toggle('show', show);
+            document.getElementById('btnSubmit').disabled = show;
+            if (show) {
+                document.getElementById('results').classList.remove('show');
+                // Animar texto de loading
+                const steps = ['Buscando oferta compatible...', 'Analizando y optimizando CV...', 'Evaluando compatibilidad ATS...', 'Revisión final...'];
+                let i = 0;
+                window._loadingInterval = setInterval(() => {
+                    document.getElementById('loadingStep').textContent = steps[i % steps.length];
+                    i++;
+                }, 3000);
+            } else {
+                clearInterval(window._loadingInterval);
+            }
+        }
+
+        function showError(msg) {
+            const box = document.getElementById('errorBox');
+            box.textContent = msg;
+            box.classList.add('show');
+        }
+
+        function hideError() {
+            document.getElementById('errorBox').classList.remove('show');
+        }
+    </script>
+</body>
+</html>

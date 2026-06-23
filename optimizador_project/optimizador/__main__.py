@@ -44,6 +44,13 @@ def print_result(final_state) -> None:
             print(f"  • {error}")
         return
     
+    # Oferta matcheada
+    if final_state.matched_offer_filename:
+        print_section("🎯 Oferta Compatible Encontrada")
+        print(f"  Oferta: {final_state.matched_offer_filename}")
+        if final_state.offer_match_score:
+            print(f"  Similitud: {final_state.offer_match_score * 100:.0f}%")
+    
     # Puntuación ATS
     if final_state.ats_score:
         print_section("📊 PUNTUACIÓN ATS")
@@ -162,12 +169,12 @@ def main():
     """Función principal del CLI."""
     print_header("🚀 OPTIMIZADOR INTELIGENTE DE CURRÍCULUMS")
     
-    print("Este sistema analizará tu CV y lo optimizará para una oferta específica.")
-    print("Utilizará inteligencia artificial para mejorar compatibilidad con sistemas ATS.\n")
+    print("Este sistema analizará tu CV, buscará la oferta más compatible")
+    print("y lo optimizará automáticamente usando inteligencia artificial.\n")
     
     # Solicitar CV
     print("=" * 60)
-    print("PASO 1: CARGAR CURRÍCULUM")
+    print("CARGAR CURRÍCULUM")
     print("=" * 60)
     print("El CV puede ser un archivo PDF o texto plano.")
     
@@ -180,41 +187,17 @@ def main():
         print(f"❌ Error cargando CV: {str(e)}")
         return 1
     
-    # Solicitar oferta de empleo
+    # Ejecutar workflow (match + optimización)
     print("\n" + "=" * 60)
-    print("PASO 2: CARGAR OFERTA DE EMPLEO")
+    print("PROCESANDO...")
     print("=" * 60)
-    print("La oferta puede ser un archivo (PDF/TXT) o texto pegado directamente.")
-    
-    input_choice = input("\n¿Archivo (a) o Texto directo (t)? [a/t]: ").strip().lower()
-    
-    if input_choice == "a":
-        job_path = get_file_path("Ruta al archivo de oferta de empleo (PDF o TXT)", "Oferta")
-        try:
-            job_posting_text = load_document(job_path)
-            print(f"✅ Oferta cargada exitosamente ({len(job_posting_text)} caracteres)")
-        except Exception as e:
-            print(f"❌ Error cargando oferta: {str(e)}")
-            return 1
-    else:
-        job_posting_text = get_text_input("📝 Ingresa el texto de la oferta de empleo:")
-        print(f"✅ Oferta ingresada ({len(job_posting_text)} caracteres)")
-    
-    if not job_posting_text or len(job_posting_text) < 50:
-        print("❌ La oferta de empleo es demasiado corta. Intenta de nuevo.")
-        return 1
-    
-    # Ejecutar workflow
-    print("\n" + "=" * 60)
-    print("PASO 3: PROCESANDO...")
-    print("=" * 60)
-    print("\n⏳ Analizando oferta de empleo...")
+    print("\n⏳ Buscando oferta compatible...")
     print("⏳ Analizando y optimizando CV...")
     print("⏳ Evaluando compatibilidad ATS...\n")
     
     try:
         workflow = create_workflow()
-        final_state = workflow.invoke(job_posting_text, cv_text)
+        final_state = workflow.invoke(cv_text)
         
         # Mostrar resultados
         print_result(final_state)

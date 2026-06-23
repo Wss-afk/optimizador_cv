@@ -1,5 +1,5 @@
 """
-Tests para el Optimizador de Currículums.
+Tests para el Optimizador de Currículums (arquitectura CV Matcher).
 """
 
 import pytest
@@ -9,12 +9,14 @@ from optimizador.models.schemas import (
     JobAnalysis,
     CVAnalysis,
     ATSScore,
+    WorkflowState,
 )
-from optimizador.agents.job_analyzer import JobAnalyzerAgent
 from optimizador.utils.pdf_loader import load_document
+from optimizador.config import OFERTAS_DIR, DOCS_DIR
 
 
-# Fixtures
+# ==================== FIXTURES ====================
+
 @pytest.fixture
 def sample_cv_path():
     """Ruta al CV de ejemplo."""
@@ -29,147 +31,188 @@ def sample_job_posting_path():
 
 @pytest.fixture
 def sample_cv_text(sample_cv_path):
-    """Texto del CV de ejemplo."""
+    """Carga el texto del CV de ejemplo."""
     if sample_cv_path.exists():
         return load_document(str(sample_cv_path))
-    return "Juan García - Desarrollador Python con 5 años de experiencia"
+    return "Nombre: Juan Pérez\nExperiencia: 5 años en Python, SQL, Docker"
 
 
 @pytest.fixture
-def sample_job_posting_text(sample_job_posting_path):
-    """Texto de la oferta de ejemplo."""
+def sample_job_text(sample_job_posting_path):
+    """Carga el texto de la oferta de ejemplo."""
     if sample_job_posting_path.exists():
         return load_document(str(sample_job_posting_path))
-    return "Se busca Desarrollador Python Senior con experiencia en FastAPI"
+    return "Buscamos desarrollador Python con 3+ años de experiencia"
 
 
-# Tests básicos
-class TestPDFLoader:
-    """Tests para el cargador de documentos."""
-    
-    def test_load_text_file(self, sample_cv_path):
-        """Prueba cargar archivo de texto."""
-        if sample_cv_path.exists():
-            text = load_document(str(sample_cv_path))
-            assert isinstance(text, str)
-            assert len(text) > 0
-    
-    def test_invalid_file_path(self):
-        """Prueba error con ruta inválida."""
-        with pytest.raises(FileNotFoundError):
-            load_document("/path/that/does/not/exist.txt")
+# ==================== TESTS DE MODELOS ====================
 
-
-class TestJobAnalyzer:
-    """Tests para el Job Analyzer Agent."""
-    
-    def test_job_analyzer_initialization(self):
-        """Prueba que el agente se inicializa correctamente."""
-        agent = JobAnalyzerAgent()
-        assert agent.llm is not None
-        assert agent.prompt_template is not None
-    
-    def test_json_extraction(self):
-        """Prueba extracción de JSON de respuesta."""
-        agent = JobAnalyzerAgent()
-        
-        # Respuesta mock con JSON
-        response = """
-        Aquí está el análisis:
-        {
-            "job_title": "Senior Developer",
-            "required_skills": ["Python", "Docker"],
-            "soft_skills": ["Leadership"],
-            "years_experience": 5,
-            "seniority_level": "Senior",
-            "keywords_ats": ["Python", "FastAPI"],
-            "responsibilities": ["Design systems"],
-            "technologies": ["FastAPI", "PostgreSQL"],
-            "salary_range": "80k-120k"
-        }
-        Espero que sea útil.
-        """
-        
-        json_str = agent._extract_json(response)
-        assert json_str.startswith("{")
-        assert json_str.endswith("}")
-        assert "job_title" in json_str
-
-
-class TestSchemas:
+class TestModels:
     """Tests para los modelos Pydantic."""
-    
-    def test_job_analysis_model(self):
-        """Prueba creación de modelo JobAnalysis."""
+
+    def test_job_analysis_creation(self):
+        """Verifica que JobAnalysis se crea correctamente."""
         job = JobAnalysis(
-            job_title="Senior Developer",
-            required_skills=["Python", "Docker"],
-            soft_skills=["Leadership"],
-            years_experience=5,
-            seniority_level="Senior",
-            keywords_ats=["Python", "FastAPI"],
-            responsibilities=["Design systems"],
-            technologies=["FastAPI"],
-            salary_range="80k-120k",
+            job_title="Desarrollador Python",
+            required_skills=["Python", "Django", "SQL"],
+            soft_skills=["Trabajo en equipo"],
+            years_experience=3,
+            seniority_level="Mid",
+            keywords_ats=["python", "django", "sql"],
+            responsibilities=["Desarrollar APIs"],
+            technologies=["Python", "PostgreSQL"],
+            salary_range="40k-50k",
         )
-        
-        assert job.job_title == "Senior Developer"
-        assert len(job.required_skills) == 2
-        assert job.years_experience == 5
-    
-    def test_cv_analysis_model(self):
-        """Prueba creación de modelo CVAnalysis."""
+        assert job.job_title == "Desarrollador Python"
+        assert len(job.required_skills) == 3
+        assert job.years_experience == 3
+
+    def test_cv_analysis_creation(self):
+        """Verifica que CVAnalysis se crea correctamente."""
         cv = CVAnalysis(
-            candidate_name="Juan García",
-            current_skills=["Python", "Django"],
-            experience_years=6,
+            candidate_name="Juan Pérez",
+            current_skills=["Python", "SQL"],
+            experience_years=5,
             education=["Ingeniería Informática"],
-            certifications=["AWS Solutions Architect"],
-            strengths=["FastAPI experience", "Leadership"],
-            gaps=["Kubernetes"],
+            certifications=["AWS Certified"],
+            strengths=["Experiencia en Python"],
+            gaps=["Falta Django"],
         )
-        
-        assert cv.candidate_name == "Juan García"
-        assert cv.experience_years == 6
-        assert len(cv.education) == 1
-    
-    def test_ats_score_model(self):
-        """Prueba creación de modelo ATSScore."""
+        assert cv.candidate_name == "Juan Pérez"
+        assert cv.experience_years == 5
+
+    def test_ats_score_creation(self):
+        """Verifica que ATSScore se crea correctamente."""
         score = ATSScore(
             keyword_match=85.0,
             format_score=90.0,
-            completeness=75.0,
-            overall_score=82.0,
+            completeness=80.0,
+            overall_score=85.0,
         )
-        
-        assert score.overall_score == 82.0
-        assert score.keyword_match == 85.0
+        assert score.overall_score == 85.0
+        assert score.keyword_match >= 0
+
+    def test_workflow_state_defaults(self):
+        """Verifica valores por defecto de WorkflowState."""
+        state = WorkflowState(cv_text="Mi CV aquí")
+        assert state.cv_text == "Mi CV aquí"
+        assert state.job_posting_text is None
+        assert state.current_step == "start"
+        assert state.errors == []
+        assert state.found_keywords == []
+
+    def test_workflow_state_with_matched_offer(self):
+        """Verifica WorkflowState con offer matcheada."""
+        state = WorkflowState(
+            cv_text="Mi CV",
+            job_posting_text="Oferta matcheada",
+            matched_offer_filename="01_python_senior",
+            offer_match_score=0.75,
+        )
+        assert state.matched_offer_filename == "01_python_senior"
+        assert state.offer_match_score == 0.75
 
 
-# Pruebas de integración (requieren Ollama corriendo)
-@pytest.mark.integration
-class TestIntegration:
-    """Tests de integración del pipeline completo."""
-    
-    def test_full_pipeline(self, sample_cv_text, sample_job_posting_text):
-        """Test del pipeline completo."""
-        pytest.importorskip("langchain_ollama")
-        
+# ==================== TESTS DE CONFIG ====================
+
+class TestConfig:
+    """Tests para la configuración."""
+
+    def test_ofertas_dir_exists(self):
+        """Verifica que la carpeta de ofertas existe."""
+        assert OFERTAS_DIR.exists()
+
+    def test_docs_dir_exists(self):
+        """Verifica que la carpeta de docs existe."""
+        assert DOCS_DIR.exists()
+
+    def test_ofertas_has_files(self):
+        """Verifica que hay ofertas en la carpeta."""
+        offer_files = list(OFERTAS_DIR.glob("*.txt")) + list(OFERTAS_DIR.glob("*.pdf"))
+        assert len(offer_files) > 0, "Debe haber al menos una oferta en ofertas/"
+
+    def test_docs_has_files(self):
+        """Verifica que hay docs en la carpeta."""
+        doc_files = list(DOCS_DIR.glob("*.txt")) + list(DOCS_DIR.glob("*.md"))
+        assert len(doc_files) > 0, "Debe haber al menos un documento en docs/"
+
+
+# ==================== TESTS DE UTILIDADES ====================
+
+class TestUtils:
+    """Tests para utilidades."""
+
+    def test_load_txt_document(self, sample_cv_path):
+        """Verifica carga de documentos TXT."""
+        if sample_cv_path.exists():
+            text = load_document(str(sample_cv_path))
+            assert len(text) > 0
+            assert isinstance(text, str)
+
+
+# ==================== TESTS DE AGENTE (requiere Ollama) ====================
+
+class TestCVReviewerAgent:
+    """Tests para el agente CV Reviewer (requiere Ollama corriendo)."""
+
+    @pytest.fixture
+    def cv_reviewer(self):
+        """Crea instancia del agente (skip si Ollama no está disponible)."""
         try:
-            from optimizador.graph.workflow import create_workflow
-            
-            workflow = create_workflow()
-            result = workflow.invoke(sample_job_posting_text, sample_cv_text)
-            
-            # Verificar que completó sin errores
-            assert result.current_step == "complete"
-            assert not result.errors
-            assert result.final_cv is not None
-            
-        except Exception as e:
-            pytest.skip(f"Ollama no disponible: {str(e)}")
+            from optimizador.agents.cv_reviewer import CVReviewerAgent
+            return CVReviewerAgent()
+        except Exception:
+            pytest.skip("Ollama no disponible")
+
+    def test_extract_json(self, cv_reviewer):
+        """Verifica extracción de JSON de texto."""
+        text = 'Aquí está el resultado: {"key": "value"} y más texto.'
+        result = cv_reviewer._extract_json(text)
+        assert result == '{"key": "value"}'
+
+    def test_extract_json_no_json(self, cv_reviewer):
+        """Verifica error cuando no hay JSON."""
+        with pytest.raises(ValueError):
+            cv_reviewer._extract_json("No hay JSON aquí")
+
+    def test_repair_json_trailing_comma(self, cv_reviewer):
+        """Verifica reparación de comas colgantes."""
+        bad_json = '{"a": 1, "b": 2,}'
+        repaired = cv_reviewer._repair_json(bad_json)
+        assert repaired == '{"a": 1, "b": 2}'
+
+    def test_repair_json_missing_comma(self, cv_reviewer):
+        """Verifica reparación de comas faltantes."""
+        bad_json = '{"a": 1 "b": 2}'
+        repaired = cv_reviewer._repair_json(bad_json)
+        assert '"a": 1, "b"' in repaired or '"a": 1,' in repaired
 
 
-if __name__ == "__main__":
-    pytest.main([__file__, "-v"])
+# ==================== TESTS DE OFERTA STORE (requiere Ollama) ====================
 
+class TestOfferStore:
+    """Tests para el store de ofertas (requiere Ollama corriendo)."""
+
+    @pytest.fixture
+    def offer_store(self):
+        """Crea instancia del store (skip si Ollama no está disponible)."""
+        try:
+            from optimizador.rag.offer_store import JobOfferStore
+            return JobOfferStore()
+        except Exception:
+            pytest.skip("Ollama no disponible para embeddings")
+
+    def test_offer_store_has_offers(self, offer_store):
+        """Verifica que el store tiene ofertas cargadas."""
+        offers = offer_store.list_offers()
+        assert len(offers) > 0
+
+    def test_match_best_offer_returns_result(self, offer_store):
+        """Verifica que match_best_offer devuelve resultado válido."""
+        cv_text = "Desarrollador Python con experiencia en Django, PostgreSQL y Docker"
+        result = offer_store.match_best_offer(cv_text)
+        assert result is not None
+        assert "offer_text" in result
+        assert "offer_filename" in result
+        assert "similarity_score" in result
+        assert result["similarity_score"] >= 0

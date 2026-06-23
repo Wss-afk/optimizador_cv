@@ -69,20 +69,22 @@ class ATSReviewResult(BaseModel):
 class WorkflowState(BaseModel):
     """Estado global del workflow LangGraph"""
     # Inputs
-    job_posting_text: str = Field(..., description="Texto de la oferta de empleo")
     cv_text: str = Field(..., description="Texto del CV extraído del PDF")
+    job_posting_text: Optional[str] = Field(None, description="Texto de la oferta (auto-matcheado)")
     
-    # Agent 1 output
-    job_analysis: Optional[JobAnalysis] = Field(None, description="Resultado del Job Analyzer")
+    # Offer matching
+    matched_offer_filename: Optional[str] = Field(None, description="Archivo de oferta matcheada")
+    offer_match_score: Optional[float] = Field(None, description="Similitud de la oferta matcheada")
     
-    # Agent 2 output
+    # Agent output
+    job_analysis: Optional[JobAnalysis] = Field(None, description="Resultado del análisis de oferta")
     cv_analysis: Optional[CVAnalysis] = Field(None, description="Análisis del CV")
     optimized_cv: Optional[str] = Field(None, description="CV optimizado")
     changes_made: List[str] = Field(default_factory=list, description="Cambios realizados")
     keywords_added: List[str] = Field(default_factory=list, description="Keywords añadidas")
     match_score: Optional[float] = Field(None, description="Score de compatibilidad")
     
-    # Agent 3 output
+    # ATS output
     ats_score: Optional[ATSScore] = Field(None, description="Puntuación ATS")
     final_cv: Optional[str] = Field(None, description="CV final pulido")
     missing_keywords: List[str] = Field(default_factory=list, description="Keywords faltantes")

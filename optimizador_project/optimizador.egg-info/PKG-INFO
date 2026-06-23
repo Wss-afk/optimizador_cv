@@ -9,6 +9,7 @@ Requires-Dist: langgraph>=0.2.0
 Requires-Dist: langchain>=0.3.0
 Requires-Dist: langchain-community>=0.3.0
 Requires-Dist: langchain-ollama>=0.2.0
+Requires-Dist: langchain-text-splitters>=0.3.0
 Requires-Dist: langchain-chroma>=0.5.0
 Requires-Dist: chromadb>=0.5.0
 Requires-Dist: pypdf>=5.0.0
