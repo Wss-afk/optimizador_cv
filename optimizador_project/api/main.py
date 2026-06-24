@@ -11,6 +11,7 @@ from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse, Response
 
+from optimizador.config import LLM_CONFIG
 from optimizador.utils.pdf_loader import load_document
 from optimizador.graph.workflow import create_workflow
 from optimizador.rag.offer_store import get_offer_store
@@ -133,8 +134,9 @@ async def health_check():
     import requests
 
     ollama_ok = False
+    ollama_base_url = LLM_CONFIG["base_url"].rstrip("/")
     try:
-        resp = requests.get("http://localhost:11434/api/tags", timeout=5)
+        resp = requests.get(f"{ollama_base_url}/api/tags", timeout=5)
         ollama_ok = resp.status_code == 200
         models = [m["name"] for m in resp.json().get("models", [])] if ollama_ok else []
     except Exception:
@@ -142,6 +144,7 @@ async def health_check():
 
     return {
         "status": "ok",
+        "ollama_base_url": ollama_base_url,
         "ollama_running": ollama_ok,
         "available_models": models,
         "qwen3_ready": any("qwen3" in m for m in models),

@@ -1,4 +1,3 @@
-README.md
 dev-requirements.txt
 pyproject.toml
 optimizador/__init__.py

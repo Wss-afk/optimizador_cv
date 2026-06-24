@@ -14,7 +14,7 @@ Nos encontramos en búsqueda de un Desarrollador Python Senior con experiencia e
 
 ---REQUISITOS DESEABLES---
 - Experiencia con microservicios
-- Conocimiento de RabbitMQ o Kafka
+- Conocimiento de RabbitMQ o Kafka  
 - Experiencia con Apache Airflow o similar
 - Certificaciones AWS (Solutions Architect, Developer Associate)
 - Experiencia liderando equipos técnicos

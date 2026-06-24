@@ -152,6 +152,7 @@ class TestUtils:
 
 # ==================== TESTS DE AGENTE (requiere Ollama) ====================
 
+@pytest.mark.integration
 class TestCVReviewerAgent:
     """Tests para el agente CV Reviewer (requiere Ollama corriendo)."""
 
@@ -190,6 +191,7 @@ class TestCVReviewerAgent:
 
 # ==================== TESTS DE OFERTA STORE (requiere Ollama) ====================
 
+@pytest.mark.integration
 class TestOfferStore:
     """Tests para el store de ofertas (requiere Ollama corriendo)."""
 
