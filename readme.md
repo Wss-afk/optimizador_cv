@@ -1,74 +1,84 @@
-# 🚀 Optimizador Inteligente de Currículums
+# Optimizador Inteligente de Curriculums
 
-Sistema multi-agente con IA que optimiza automáticamente tu CV para superar filtros ATS (Applicant Tracking Systems), usando matching inteligente de ofertas de empleo con embeddings y generación de contenido con LLM local.
+Sistema multi-agente con IA que optimiza automaticamente tu CV para mejorar su compatibilidad con filtros ATS. El flujo combina matching semantico de ofertas con embeddings, contexto RAG y generacion con LLM local mediante Ollama.
 
 ![Python](https://img.shields.io/badge/Python-3.9+-blue)
 ![License](https://img.shields.io/badge/License-MIT-green)
 ![Ollama](https://img.shields.io/badge/LLM-Ollama-orange)
+![Docker](https://img.shields.io/badge/Docker-ready-2496ED)
 
-## ✨ Características
+## Caracteristicas
 
-- **Matching Automático de Ofertas**: Sube tu CV y el sistema encuentra automáticamente la oferta más compatible usando embeddings (ChromaDB + nomic-embed-text)
-- **Optimización con IA**: Un agente LLM analiza la oferta, tu CV, y genera una versión optimizada con keywords ATS
-- **Evaluación ATS**: Puntuación detallada de compatibilidad (keyword match, formato, completitud)
-- **Base de Conocimiento RAG**: Mejores prácticas de CV integradas mediante Retrieval-Augmented Generation
-- **Descarga en PDF**: Exporta tu CV optimizado directamente en formato PDF
-- **Interfaz Web Moderna**: Dashboard oscuro y responsive con visualización de ofertas, resultados y métricas
-- **100% Local**: Todo corre en tu máquina con Ollama — sin enviar datos a la nube
+- Matching automatico de ofertas usando ChromaDB y `nomic-embed-text`
+- Optimizacion del CV con LLM local (`qwen3:8b`)
+- Evaluacion ATS con keywords encontradas, faltantes y puntuaciones
+- Base de conocimiento RAG con buenas practicas de CV
+- API REST con FastAPI y frontend web integrado
+- Exportacion del CV optimizado a PDF
+- Ejecucion local o mediante Docker
 
-## 🏗️ Arquitectura
+## Arquitectura
 
+```text
+START -> match_offer -> review_cv -> END
+           |               |
+           |               -> CV Reviewer Agent (LLM + RAG)
+           -> ChromaDB + embeddings
 ```
-START → match_offer → review_cv → END
-         (ChromaDB       (CV Reviewer Agent
-          embeddings)      LLM + RAG)
+
+## Estructura del proyecto
+
+```text
+optimizador-cv/
+|-- Dockerfile
+|-- docker-compose.yml
+|-- chroma_db/
+|-- optimizador_project/
+|   |-- api/
+|   |-- data/
+|   |-- docs/
+|   |-- ofertas/
+|   |-- optimizador/
+|   |   |-- agents/
+|   |   |-- graph/
+|   |   |-- models/
+|   |   |-- rag/
+|   |   `-- utils/
+|   |-- static/
+|   `-- tests/
+`-- readme.md
 ```
 
-### Componentes principales
+## Requisitos
 
-| Módulo | Descripción |
-|--------|-------------|
-| `agents/cv_reviewer.py` | Agente unificado que analiza oferta, CV, optimiza, evalúa ATS y revisa |
-| `rag/offer_store.py` | Indexación y matching de ofertas de empleo con ChromaDB |
-| `rag/vector_store.py` | Base de conocimiento RAG (mejores prácticas de CV) |
-| `graph/workflow.py` | Orquestador LangGraph StateGraph con 2 nodos |
-| `models/schemas.py` | Modelos Pydantic para validación de datos |
-| `api/main.py` | Backend FastAPI con endpoints REST |
-| `static/index.html` | Frontend SPA con interfaz completa |
+### Opcion 1: ejecucion local
 
-### Flujo de trabajo
+- Python 3.9 o superior
+- Ollama instalado y corriendo
+- Modelos descargados:
+  - `qwen3:8b`
+  - `nomic-embed-text`
 
-1. **Startup**: Se cargan todas las ofertas de `ofertas/` en ChromaDB (collection: `job_offers`)
-2. **Upload CV**: El usuario sube su CV (PDF o TXT)
-3. **Match Offer**: Se calcula el embedding del CV y se busca la oferta más similar en ChromaDB
-4. **CV Review**: El agente LLM (qwen3:8b) recibe la oferta matcheada + CV + contexto RAG, y devuelve:
-   - Análisis de la oferta y del CV
-   - CV optimizado y reescrito
-   - Puntuación ATS detallada
-   - Keywords encontradas y faltantes
-   - Recomendaciones y mejoras aplicadas
-5. **Resultado**: El usuario ve el CV optimizado y puede descargarlo en PDF
+### Opcion 2: ejecucion con Docker
 
-## 📋 Requisitos
+- Docker Desktop corriendo
+- Ollama corriendo en la maquina host
+- Modelos descargados en Ollama:
+  - `qwen3:8b`
+  - `nomic-embed-text`
 
-- **Python** 3.9+
-- **Ollama** corriendo localmente con los modelos:
-  - `qwen3:8b` — LLM principal para análisis y optimización
-  - `nomic-embed-text` — Modelo de embeddings
-- **RAM**: Mínimo 8 GB (recomendado 16 GB para LLM)
-
-## 🚀 Instalación
-
-### 1. Clonar el repositorio
+Descarga de modelos:
 
 ```bash
-git clone https://github.com/user/optimizador-cv.git
+ollama pull qwen3:8b
+ollama pull nomic-embed-text
+```
+
+## Instalacion local
+
+```bash
+git clone https://github.com/tu-usuario/optimizador-cv.git
 cd optimizador-cv/optimizador_project
-```
-
-### 2. Instalar dependencias
-
-```bash
 pip install -e .
 ```
 
@@ -78,110 +88,169 @@ Para desarrollo:
 pip install -e ".[dev]"
 ```
 
-### 3. Configurar Ollama
+## Uso
 
-```bash
-# Instalar Ollama desde https://ollama.com
-ollama pull qwen3:8b
-ollama pull nomic-embed-text
-```
-
-## 🖥️ Uso
-
-### Modo Web (recomendado)
+### Modo web local
 
 ```bash
 cd optimizador_project
 uvicorn api.main:app --host 0.0.0.0 --port 8000
 ```
 
-Abre `http://localhost:8000` en tu navegador.
+Abre [http://localhost:8000](http://localhost:8000).
+
+### Modo Docker
+
+Desde la raiz del proyecto:
+
+```bash
+docker compose up --build
+```
+
+Abre [http://localhost:8000](http://localhost:8000).
+
+Configuracion actual de Docker:
+
+- El contenedor expone la API en `8000`
+- `OLLAMA_BASE_URL` apunta a `http://host.docker.internal:11434`
+- `chroma_db/` se monta como volumen persistente
+
+Nota:
+
+- En Windows y macOS, `host.docker.internal` suele funcionar directamente
+- En Linux, puede ser necesario cambiar `OLLAMA_BASE_URL` por la IP de host accesible desde Docker
+
+### Levantarlo en otro ordenador
+
+Si otra persona descarga este proyecto, necesita estas piezas:
+
+- Docker Desktop funcionando
+- Ollama instalado y corriendo
+- Los modelos `qwen3:8b` y `nomic-embed-text`
+
+Pasos:
+
+```bash
+git clone <repo>
+cd optimizador-cv
+ollama pull qwen3:8b
+ollama pull nomic-embed-text
+docker compose up --build
+```
+
+Luego abre [http://localhost:8000](http://localhost:8000).
+
+Notas por sistema:
+
+- Windows y macOS: la configuracion actual suele funcionar sin cambios
+- Linux: `host.docker.internal` puede no resolver
+- Si usas Linux, cambia `OLLAMA_BASE_URL` en `docker-compose.yml` por una IP accesible desde el contenedor
+
+Ejemplo en Linux:
+
+```yaml
+environment:
+  OLLAMA_BASE_URL: http://172.17.0.1:11434
+```
+
+Si la pagina abre pero no salen ofertas:
+
+- revisa que Ollama siga activo
+- revisa que `nomic-embed-text` este descargado
+- prueba `http://localhost:8000/api/health`
+- prueba `http://localhost:8000/api/offers`
 
 ### Modo CLI
 
 ```bash
+cd optimizador_project
 python -m optimizador
 ```
 
-### Endpoints API
+## Flujo funcional
 
-| Método | Ruta | Descripción |
-|--------|------|-------------|
+1. El sistema indexa las ofertas de `optimizador_project/ofertas/` en ChromaDB.
+2. El usuario sube un CV en PDF o TXT.
+3. Se calcula el embedding del CV y se busca la oferta mas compatible.
+4. El agente analiza la oferta, optimiza el CV y evalua la compatibilidad ATS.
+5. El frontend muestra puntuaciones, keywords, mejoras y el CV final.
+6. El usuario puede descargar el resultado en PDF.
+
+## Endpoints API
+
+| Metodo | Ruta | Descripcion |
+|---|---|---|
 | `GET` | `/` | Interfaz web |
-| `GET` | `/api/health` | Estado del sistema (Ollama, embeddings) |
-| `POST` | `/api/optimize` | Optimizar CV (recibe `cv_file`) |
-| `GET` | `/api/offers` | Lista de ofertas indexadas con metadata |
-| `GET` | `/api/offers/{filename}` | Detalle completo de una oferta |
-| `POST` | `/api/download-pdf` | Generar PDF del CV optimizado |
+| `GET` | `/api/health` | Estado de API, Ollama y modelos |
+| `GET` | `/api/offers` | Lista de ofertas indexadas |
+| `GET` | `/api/offers/{filename}` | Detalle de una oferta |
+| `POST` | `/api/optimize` | Optimiza un CV subido como `cv_file` |
+| `POST` | `/api/download-pdf` | Genera un PDF del CV optimizado |
 
-## 📁 Estructura del proyecto
+## Configuracion
 
-```
-optimizador-cv/
-├── optimizador_project/
-│   ├── api/
-│   │   └── main.py                 # Backend FastAPI
-│   ├── optimizador/
-│   │   ├── __main__.py             # CLI
-│   │   ├── config.py               # Configuración global
-│   │   ├── agents/
-│   │   │   └── cv_reviewer.py      # Agente unificado
-│   │   ├── graph/
-│   │   │   └── workflow.py         # LangGraph workflow
-│   │   ├── models/
-│   │   │   └── schemas.py          # Modelos Pydantic
-│   │   ├── rag/
-│   │   │   ├── offer_store.py      # Store de ofertas (ChromaDB)
-│   │   │   └── vector_store.py     # Base de conocimiento RAG
-│   │   └── utils/
-│   │       └── pdf_loader.py       # Cargador de documentos
-│   ├── docs/                       # Documentos RAG (mejores prácticas)
-│   │   ├── ats_rules.txt
-│   │   ├── recruitment_tips.txt
-│   │   └── resume_best_practices.txt
-│   ├── ofertas/                    # Ofertas de empleo (20 archivos)
-│   │   ├── 01_python_senior.txt
-│   │   ├── 02_frontend_react.txt
-│   │   ├── ...
-│   │   └── 20_data_scientist.txt
-│   ├── static/
-│   │   └── index.html              # Frontend web
-│   ├── tests/
-│   │   └── test_optimizador.py     # Tests (16 tests)
-│   └── pyproject.toml              # Dependencias y configuración
-└── chroma_db/                      # Base de datos ChromaDB (generado)
-```
+La configuracion principal esta en [`optimizador_project/optimizador/config.py`](./optimizador_project/optimizador/config.py).
 
-## 🧪 Tests
+Parametros relevantes:
+
+| Parametro | Default | Descripcion |
+|---|---|---|
+| `OLLAMA_BASE_URL` | `http://localhost:11434` | URL base de Ollama |
+| `LLM_CONFIG.model` | `qwen3:8b` | Modelo principal |
+| `RAG_CONFIG.top_k` | `3` | Documentos RAG recuperados |
+| `OFERTAS_RAG_CONFIG.top_k` | `1` | Numero de ofertas candidatas |
+
+## Tests
+
+Tests no integracion:
 
 ```bash
 cd optimizador_project
-python -m pytest tests/ -v
+python -m pytest tests -m "not integration" -v
 ```
 
-> **Nota**: Los tests de integración requieren Ollama corriendo. Los tests unitarios (modelos, config, utils) funcionan sin dependencias externas.
+Tests de integracion con Ollama:
 
-## ⚙️ Configuración
+```bash
+cd optimizador_project
+python -m pytest tests -m integration -v
+```
 
-Edita `optimizador/config.py` para personalizar:
+## Solucion de problemas
 
-| Parámetro | Default | Descripción |
-|-----------|---------|-------------|
-| `LLM_CONFIG.model` | `qwen3:8b` | Modelo LLM principal |
-| `RAG_CONFIG.top_k` | `3` | Documentos RAG a recuperar |
-| `OFERTAS_RAG_CONFIG.top_k` | `1` | Número de ofertas a matchear |
-| `OLLAMA_BASE_URL` | `http://localhost:11434` | URL de Ollama (env var) |
+### No aparecen ofertas en la interfaz
 
-## 📦 Tecnologías
+Comprueba:
 
-- **[LangGraph](https://langchain-ai.github.io/langgraph/)** — Orquestación de workflow con StateGraph
-- **[LangChain](https://python.langchain.com/)** — Framework de IA y RAG
-- **[Ollama](https://ollama.com/)** — LLM local (qwen3:8b + nomic-embed-text)
-- **[ChromaDB](https://www.trychroma.com/)** — Base de datos vectorial para embeddings
-- **[FastAPI](https://fastapi.tiangolo.com/)** — Backend REST API
-- **[fpdf2](https://pyfpdf.github.io/fpdf2/)** — Generación de PDFs
-- **[Pydantic](https://docs.pydantic.dev/)** — Validación de datos
+- Que Ollama esta corriendo
+- Que `nomic-embed-text` esta descargado
+- Que `optimizador_project/ofertas/` contiene archivos `.txt` o `.pdf`
+- Que `OLLAMA_BASE_URL` apunta a una instancia accesible desde donde corre la API
 
-## 📄 Licencia
+Prueba el endpoint:
+
+```bash
+python -c "import json, urllib.request; print(json.load(urllib.request.urlopen('http://localhost:8000/api/offers')))"
+```
+
+### Docker no conecta con el daemon
+
+En Windows, asegurate de que Docker Desktop este abierto y el engine este en estado `running`.
+
+### La API arranca pero no detecta Ollama en Docker
+
+Verifica que Ollama este disponible en el host y que `docker-compose.yml` use una URL accesible desde el contenedor.
+
+## Tecnologias
+
+- [FastAPI](https://fastapi.tiangolo.com/)
+- [LangGraph](https://langchain-ai.github.io/langgraph/)
+- [LangChain](https://python.langchain.com/)
+- [Ollama](https://ollama.com/)
+- [ChromaDB](https://www.trychroma.com/)
+- [Pydantic](https://docs.pydantic.dev/)
+- [fpdf2](https://py-pdf.github.io/fpdf2/)
+
+## Licencia
 
 MIT
