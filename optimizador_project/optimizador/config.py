@@ -23,14 +23,17 @@ DATA_DIR.mkdir(exist_ok=True)
 
 # ==================== LLM CONFIGURATION ====================
 
-OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+OLLAMA_API_BASE_URL = os.getenv(
+    "OLLAMA_API_BASE_URL",
+    os.getenv("OLLAMA_BASE_URL", "http://localhost:11434"),
+)
 
 LLM_CONFIG = {
     "model": "qwen3:8b",
     "temperature_extraction": 0.1,      # Extracción precisa (Job Analyzer)
     "temperature_optimization": 0.4,    # Creatividad controlada (CV Optimizer)
     "temperature_review": 0.2,          # Revisión precisa (ATS Reviewer)
-    "base_url": OLLAMA_BASE_URL,
+    "base_url": OLLAMA_API_BASE_URL,
     "request_timeout": 300,              # 5 minutos timeout
 }
 
@@ -41,7 +44,7 @@ RAG_CONFIG = {
     "chunk_size": 500,
     "chunk_overlap": 50,
     "embedding_model": "nomic-embed-text",
-    "base_url": OLLAMA_BASE_URL,
+    "base_url": OLLAMA_API_BASE_URL,
     "collection_name": "cv_knowledge_base",
     "persist_directory": str(CHROMA_DB_DIR),
     "top_k": 3,                         # Documentos a recuperar
@@ -51,7 +54,7 @@ OFERTAS_RAG_CONFIG = {
     "chunk_size": 1000,
     "chunk_overlap": 100,
     "embedding_model": "nomic-embed-text",
-    "base_url": OLLAMA_BASE_URL,
+    "base_url": OLLAMA_API_BASE_URL,
     "collection_name": "job_offers",     # Colección independiente
     "persist_directory": str(CHROMA_DB_DIR),
     "top_k": 1,                         # Solo el mejor match
