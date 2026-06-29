@@ -112,13 +112,13 @@ Abre [http://localhost:8000](http://localhost:8000).
 Configuracion actual de Docker:
 
 - El contenedor expone la API en `8000`
-- `OLLAMA_BASE_URL` apunta a `http://host.docker.internal:11434`
+- `OLLAMA_API_BASE_URL` apunta a `http://host.docker.internal:11434`
 - `chroma_db/` se monta como volumen persistente
 
 Nota:
 
 - En Windows y macOS, `host.docker.internal` suele funcionar directamente
-- En Linux, puede ser necesario cambiar `OLLAMA_BASE_URL` por la IP de host accesible desde Docker
+- En Linux, puede ser necesario cambiar `OLLAMA_API_BASE_URL` por la IP de host accesible desde Docker
 
 ### Levantarlo en otro ordenador
 
@@ -144,13 +144,13 @@ Notas por sistema:
 
 - Windows y macOS: la configuracion actual suele funcionar sin cambios
 - Linux: `host.docker.internal` puede no resolver
-- Si usas Linux, cambia `OLLAMA_BASE_URL` en `docker-compose.yml` por una IP accesible desde el contenedor
+- Si usas Linux, cambia `OLLAMA_API_BASE_URL` en `docker-compose.yml` por una IP accesible desde el contenedor
 
 Ejemplo en Linux:
 
 ```yaml
 environment:
-  OLLAMA_BASE_URL: http://172.17.0.1:11434
+  OLLAMA_API_BASE_URL: http://172.17.0.1:11434
 ```
 
 Si la pagina abre pero no salen ofertas:
@@ -195,7 +195,7 @@ Parametros relevantes:
 
 | Parametro | Default | Descripcion |
 |---|---|---|
-| `OLLAMA_BASE_URL` | `http://localhost:11434` | URL base de Ollama |
+| `OLLAMA_API_BASE_URL` | `http://localhost:11434` | URL base de Ollama |
 | `LLM_CONFIG.model` | `qwen3:8b` | Modelo principal |
 | `RAG_CONFIG.top_k` | `3` | Documentos RAG recuperados |
 | `OFERTAS_RAG_CONFIG.top_k` | `1` | Numero de ofertas candidatas |
@@ -225,7 +225,7 @@ Comprueba:
 - Que Ollama esta corriendo
 - Que `nomic-embed-text` esta descargado
 - Que `optimizador_project/ofertas/` contiene archivos `.txt` o `.pdf`
-- Que `OLLAMA_BASE_URL` apunta a una instancia accesible desde donde corre la API
+- Que `OLLAMA_API_BASE_URL` apunta a una instancia accesible desde donde corre la API
 
 Prueba el endpoint:
 
