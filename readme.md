@@ -1,4 +1,5 @@
 # Optimizador Inteligente de Curriculums
+<img width="1905" height="857" alt="image" src="https://github.com/user-attachments/assets/050501a2-8fab-414f-8395-18a1b7a0c3cb" />
 
 Sistema multi-agente con IA que optimiza automaticamente tu CV para mejorar su compatibilidad con filtros ATS. El flujo combina matching semantico de ofertas con embeddings, contexto RAG y generacion con LLM local mediante Ollama.
 
